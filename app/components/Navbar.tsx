@@ -38,34 +38,16 @@ export default function Navbar() {
           </div>
             <div className="hidden lg:flex items-center justify-between flex-1 px-6">
             <div className="flex space-x-6">
-              <Link href="#" className="text-black dark:text-yellow-300 hover:text-yellow-500">Services</Link>
+              <Link href="/services" className="text-black dark:text-yellow-300 hover:text-yellow-500">Services</Link>
               <Link href="/about" className="text-black dark:text-yellow-300 hover:text-yellow-500">About Us</Link>
             </div>
-            <input
-              type="search"
-              placeholder="Search..."
-              className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-black dark:text-yellow-300"
-            />
-          </div>
-          <div className="hidden lg:flex items-center space-x-4">
-            <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500">Login</button>
-            <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500">Sign Up</button>
           </div>
         </div>
       </nav>
       <div className={`lg:hidden ${menuOpen ? 'block' : 'hidden'} bg-zinc-100 dark:bg-zinc-800 p-4`}>
         <div className="flex flex-col space-y-2">
-          <Link href="#" className="text-black dark:text-yellow-300 hover:text-yellow-500">Services</Link>
+          <Link href="/services" className="text-black dark:text-yellow-300 hover:text-yellow-500">Services</Link>
           <Link href="/about" className="text-black dark:text-yellow-300 hover:text-yellow-500">About Us</Link>
-          <input
-            type="search"
-            placeholder="Search..."
-            className="px-3 py-1 rounded border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-700 text-black dark:text-yellow-300"
-          />
-          <div className="flex space-x-4 mt-2">
-            <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500">Login</button>
-            <button className="px-4 py-2 bg-yellow-400 text-black rounded hover:bg-yellow-500">Sign Up</button>
-          </div>
         </div>
       </div>
     </>
