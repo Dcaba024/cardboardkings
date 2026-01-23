@@ -27,17 +27,54 @@ export default function AdminDashboard() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [price, setPrice] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
+  const [fileInputKey, setFileInputKey] = useState(0);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [successPulse, setSuccessPulse] = useState(false);
+  const [successVisible, setSuccessVisible] = useState(false);
+
+  useEffect(() => {
+    if (!successPulse) return;
+    const timeout = setTimeout(() => setSuccessPulse(false), 400);
+    return () => clearTimeout(timeout);
+  }, [successPulse]);
+
+  useEffect(() => {
+    if (!successMessage) return;
+    setSuccessVisible(true);
+    const hideTimeout = setTimeout(() => setSuccessVisible(false), 2200);
+    const clearTimeoutId = setTimeout(() => setSuccessMessage(null), 2600);
+    return () => {
+      clearTimeout(hideTimeout);
+      clearTimeout(clearTimeoutId);
+    };
+  }, [successMessage]);
+
+  const showError = (message: string) => {
+    setFormError(message);
+    if (typeof window !== "undefined") {
+      window.alert(message);
+    }
+  };
 
   const stats = useMemo(() => {
     const active = listings.filter((listing) => listing.status === "ACTIVE").length;
     const sold = listings.filter((listing) => listing.status === "SOLD").length;
     return { active, sold, total: listings.length };
   }, [listings]);
+
+  const activeListings = useMemo(
+    () => listings.filter((listing) => listing.status === "ACTIVE"),
+    [listings]
+  );
+
+  const soldListings = useMemo(
+    () => listings.filter((listing) => listing.status === "SOLD"),
+    [listings]
+  );
 
   useEffect(() => {
     if (!imageFile) {
@@ -78,10 +115,10 @@ export default function AdminDashboard() {
     setFormError(null);
     const trimmedTitle = title.trim();
     const trimmedDescription = description.trim();
-    const trimmedImage = imageUrl.trim();
     const numericPrice = Number(price);
-    const finalImage = trimmedImage || (imageFile ? await readFileAsDataUrl(imageFile) : previewUrl);
+    const finalImage = imageFile ? await readFileAsDataUrl(imageFile) : previewUrl;
     if (!trimmedTitle || !trimmedDescription || !finalImage || Number.isNaN(numericPrice) || numericPrice <= 0) {
+      showError("Please complete every field with valid values before submitting.");
       return;
     }
 
@@ -105,16 +142,18 @@ export default function AdminDashboard() {
     if (response.ok) {
       const created = (await response.json()) as Listing;
       setListings((prev) => [created, ...prev]);
+      setTitle("");
+      setDescription("");
+      setPrice("");
+      setImageFile(null);
+      setFileInputKey((prev) => prev + 1);
+      setFormError(null);
+      setSuccessMessage("Listing added.");
+      setSuccessPulse(true);
     } else {
       const data = await response.json().catch(() => null);
-      setFormError(data?.error ?? "Failed to save listing.");
+      showError(data?.error ?? "Failed to save listing.");
     }
-
-    setTitle("");
-    setDescription("");
-    setPrice("");
-    setImageUrl("");
-    setImageFile(null);
   };
 
   const toggleStatus = async (id: string) => {
@@ -176,6 +215,15 @@ export default function AdminDashboard() {
         <h2 className="text-2xl font-semibold text-zinc-900 dark:text-yellow-300 mb-4">
           Add a card
         </h2>
+        {successMessage ? (
+          <p
+            className={`mb-4 text-sm text-emerald-600 transition-all duration-300 dark:text-emerald-400 ${
+              successPulse ? "animate-pulse" : ""
+            } ${successVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2"}`}
+          >
+            {successMessage}
+          </p>
+        ) : null}
         {formError ? (
           <p className="mb-4 text-sm text-red-500">
             {formError}
@@ -187,6 +235,7 @@ export default function AdminDashboard() {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Card title"
+            required
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
           />
           <input
@@ -194,6 +243,7 @@ export default function AdminDashboard() {
             value={description}
             onChange={(event) => setDescription(event.target.value)}
             placeholder="Short description"
+            required
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
           />
           <input
@@ -201,22 +251,25 @@ export default function AdminDashboard() {
             value={price}
             onChange={(event) => setPrice(event.target.value)}
             placeholder="Price (USD)"
+            min="1"
+            step="1"
+            required
             className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
           />
           <div className="md:col-span-2 grid gap-3">
             <input
+              key={fileInputKey}
               type="file"
               accept="image/*"
               onChange={(event) => setImageFile(event.target.files?.[0] ?? null)}
+              required
               className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
             />
-            <input
-              type="text"
-              value={imageUrl}
-              onChange={(event) => setImageUrl(event.target.value)}
-              placeholder="Or paste image URL / path"
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-            />
+            {!imageFile && (
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                Image required.
+              </p>
+            )}
           </div>
           <button
             type="submit"
@@ -243,66 +296,138 @@ export default function AdminDashboard() {
         ) : null}
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-        {isLoading ? (
-          <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
-            Loading listings...
-          </div>
-        ) : listings.length === 0 ? (
-          <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
-            No listings yet. Add your first card above.
-          </div>
-        ) : listings.map((listing) => (
-          <div
-            key={listing.id}
-            className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
-          >
-            <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-900">
-              <Image
-                src={listing.imageUrl}
-                alt={listing.title}
-                fill
-                sizes="(max-width: 768px) 100vw, 320px"
-                className="object-cover"
-              />
-            </div>
-            <div className="flex flex-1 flex-col gap-4 p-5">
-              <div>
-                <h3 className="text-lg font-semibold text-zinc-900 dark:text-yellow-300">
-                  {listing.title}
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {listing.description}
-                </p>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Listed on {new Date(listing.createdAt).toLocaleDateString()}
-                </p>
+      <section className="space-y-10">
+        <div>
+          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-yellow-300">
+            Active listings
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {isLoading ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
+                Loading listings...
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-xl font-semibold text-zinc-900 dark:text-yellow-300">
-                  {priceFormatter.format(listing.priceCents / 100)}
-                </span>
-                <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
-                  {listing.status}
-                </span>
+            ) : activeListings.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
+                No active listings yet. Add your first card above.
               </div>
-              <div className="mt-auto flex gap-3">
-                <button
-                  onClick={() => toggleStatus(listing.id)}
-                  className="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300"
+            ) : (
+              activeListings.map((listing) => (
+                <div
+                  key={listing.id}
+                  className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
                 >
-                  Toggle status
-                </button>
-                <button
-                  onClick={() => removeListing(listing.id)}
-                  className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-500 hover:border-red-300"
-                >
-                  Remove
-                </button>
-              </div>
-            </div>
+                  <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-900">
+                    <Image
+                      src={listing.imageUrl}
+                      alt={listing.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 320px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-4 p-5">
+                    <div>
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-yellow-300">
+                        {listing.title}
+                      </h3>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {listing.description}
+                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Listed on {new Date(listing.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-semibold text-zinc-900 dark:text-yellow-300">
+                        {priceFormatter.format(listing.priceCents / 100)}
+                      </span>
+                      <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                        {listing.status}
+                      </span>
+                    </div>
+                    <div className="mt-auto flex flex-wrap gap-3">
+                      <button
+                        onClick={() => toggleStatus(listing.id)}
+                        className="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300"
+                      >
+                        Mark sold
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-        ))}
+        </div>
+
+        <div>
+          <h2 className="mb-4 text-xl font-semibold text-zinc-900 dark:text-yellow-300">
+            Sold listings
+          </h2>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {isLoading ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
+                Loading listings...
+              </div>
+            ) : soldListings.length === 0 ? (
+              <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
+                No sold cards yet.
+              </div>
+            ) : (
+              soldListings.map((listing) => (
+                <div
+                  key={listing.id}
+                  className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
+                >
+                  <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-900">
+                    <Image
+                      src={listing.imageUrl}
+                      alt={listing.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 320px"
+                      className="object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col gap-4 p-5">
+                    <div>
+                      <h3 className="text-lg font-semibold text-zinc-900 dark:text-yellow-300">
+                        {listing.title}
+                      </h3>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        {listing.description}
+                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Sold on {new Date(listing.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xl font-semibold text-zinc-900 dark:text-yellow-300">
+                        {priceFormatter.format(listing.priceCents / 100)}
+                      </span>
+                      <span className="rounded-full border border-zinc-200 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:border-zinc-800 dark:text-zinc-400">
+                        {listing.status}
+                      </span>
+                    </div>
+                    <div className="mt-auto flex flex-wrap gap-3">
+                      <button
+                        onClick={() => toggleStatus(listing.id)}
+                        className="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300"
+                      >
+                        Restore
+                      </button>
+                      <button
+                        onClick={() => removeListing(listing.id)}
+                        className="rounded-full border border-red-200 px-4 py-2 text-xs font-semibold text-red-500 hover:border-red-300"
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </section>
     </div>
   );

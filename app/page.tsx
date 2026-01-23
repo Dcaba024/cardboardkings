@@ -4,6 +4,15 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useCart } from "./context/CartContext";
 
+type CardForSale = {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  alt: string;
+};
+
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
@@ -14,6 +23,8 @@ export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentCard, setCurrentCard] = useState(0);
   const [addPulse, setAddPulse] = useState(false);
+  const [cardsForSale, setCardsForSale] = useState<CardForSale[]>([]);
+  const [cardsLoaded, setCardsLoaded] = useState(false);
   const { addItem } = useCart();
 
   const slides = [
@@ -27,32 +38,45 @@ export default function Home() {
     "https://thumbs.dreamstime.com/b/baseball-cards-collection-major-league-48239751.jpg", // Replace with actual image URL
     "https://cdn11.bigcommerce.com/s-cft20qcvqs/images/stencil/original/image-manager/sports-plp-baseball.jpg?t=1674001770"  // Replace with actual image URL
   ];
-  const cardsForSale = [
-    {
-      id: "jasson-dominguez",
-      name: "Jasson Dominguez",
-      description: "Bowman Chrome Prospect",
-      price: 1000,
-      image: "/jasson.jpg",
-      alt: "Jasson Dominguez Bowman Chrome card"
-    },
-    {
-      id: "jasson-dominguez-rookie",
-      name: "Jasson Dominguez",
-      description: "Rookie Showcase",
-      price: 850,
-      image: "/Dominguez.JPEG",
-      alt: "Jasson Dominguez rookie card"
-    },
-    {
-      id: "julio-rodriguez",
-      name: "Julio Rodriguez",
-      description: "Topps Chrome",
-      price: 1200,
-      image: "/jasson.jpg",
-      alt: "Julio Rodriguez Topps Chrome card"
-    }
-  ];
+  useEffect(() => {
+    let isActive = true;
+
+    const loadCards = async () => {
+      try {
+        const response = await fetch("/api/listings", { cache: "no-store" });
+        if (!response.ok) {
+          return;
+        }
+        const data = await response.json();
+        if (!Array.isArray(data)) {
+          return;
+        }
+        const activeCards = data.filter((listing) => listing?.status === "ACTIVE");
+        const shuffled = activeCards.sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, 3).map((listing) => ({
+          id: listing.id,
+          name: listing.title,
+          description: listing.description,
+          price: listing.priceCents / 100,
+          image: listing.imageUrl,
+          alt: `${listing.title} card`,
+        }));
+        if (isActive) {
+          setCardsForSale(selected);
+        }
+      } finally {
+        if (isActive) {
+          setCardsLoaded(true);
+        }
+      }
+    };
+
+    loadCards();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -62,10 +86,16 @@ export default function Home() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
   };
   const nextCard = () => {
+    if (cardsForSale.length < 2) {
+      return;
+    }
     setCurrentCard((prev) => (prev + 1) % cardsForSale.length);
   };
 
   const prevCard = () => {
+    if (cardsForSale.length < 2) {
+      return;
+    }
     setCurrentCard((prev) => (prev - 1 + cardsForSale.length) % cardsForSale.length);
   };
 
@@ -77,6 +107,9 @@ export default function Home() {
 
   const handleAddToCart = () => {
     const card = cardsForSale[currentCard];
+    if (!card) {
+      return;
+    }
     addItem({
       id: card.id,
       name: card.name,
@@ -85,6 +118,9 @@ export default function Home() {
     });
     setAddPulse(true);
   };
+  useEffect(() => {
+    setCurrentCard(0);
+  }, [cardsForSale.length]);
 
   return (
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black">
@@ -133,69 +169,99 @@ export default function Home() {
           Cards for sale
         </h2>
         <div className="relative overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="grid gap-6 p-6 md:grid-cols-[220px_1fr] md:items-center">
-            <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900">
-              <Image
-                src={cardsForSale[currentCard].image}
-                alt={cardsForSale[currentCard].alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 220px"
-                className="object-cover"
-              />
+          {cardsLoaded && cardsForSale.length === 0 ? (
+            <div className="p-10 text-center text-sm text-zinc-500 dark:text-zinc-400">
+              There are no cards for sale yet but come back and check again later.
             </div>
-            <div className="flex flex-col gap-4 text-left">
-              <div>
-                <h3 className="text-2xl font-semibold text-zinc-900 dark:text-yellow-300">
-                  {cardsForSale[currentCard].name}
-                </h3>
-                <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  {cardsForSale[currentCard].description}
-                </p>
+          ) : (
+            <>
+              <div className="grid gap-6 p-6 md:grid-cols-[220px_1fr] md:items-center">
+                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg bg-zinc-100 dark:bg-zinc-900">
+                  {cardsForSale[currentCard] && (
+                    <Image
+                      src={cardsForSale[currentCard].image}
+                      alt={cardsForSale[currentCard].alt}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 220px"
+                      className="object-cover"
+                    />
+                  )}
+                  {!cardsForSale[currentCard] && !cardsLoaded && (
+                    <div className="absolute inset-0 animate-pulse bg-zinc-200 dark:bg-zinc-800" />
+                  )}
+                </div>
+                <div className="flex flex-col gap-4 text-left">
+                  <div>
+                    {cardsForSale[currentCard] ? (
+                      <>
+                        <h3 className="text-2xl font-semibold text-zinc-900 dark:text-yellow-300">
+                          {cardsForSale[currentCard].name}
+                        </h3>
+                        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                          {cardsForSale[currentCard].description}
+                        </p>
+                      </>
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="h-7 w-2/3 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                        <div className="h-4 w-1/2 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="text-3xl font-bold text-zinc-900 dark:text-yellow-400">
+                    {cardsForSale[currentCard] ? (
+                      priceFormatter.format(cardsForSale[currentCard].price)
+                    ) : (
+                      <div className="h-9 w-32 animate-pulse rounded bg-zinc-200 dark:bg-zinc-800" />
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-3 sm:flex-row">
+                    <button
+                      onClick={handleAddToCart}
+                      disabled={!cardsForSale[currentCard]}
+                      className={`rounded-full bg-zinc-900 px-6 py-2 text-sm font-semibold text-white transition-transform duration-150 hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-yellow-400 dark:text-black dark:hover:bg-yellow-300 ${
+                        addPulse ? "scale-105" : "scale-100"
+                      }`}
+                    >
+                      Add to cart
+                    </button>
+                  </div>
+                </div>
               </div>
-              <div className="text-3xl font-bold text-zinc-900 dark:text-yellow-400">
-                {priceFormatter.format(cardsForSale[currentCard].price)}
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <button
-                  onClick={handleAddToCart}
-                  className={`rounded-full bg-zinc-900 px-6 py-2 text-sm font-semibold text-white transition-transform duration-150 hover:bg-zinc-800 dark:bg-yellow-400 dark:text-black dark:hover:bg-yellow-300 ${
-                    addPulse ? "scale-105" : "scale-100"
-                  }`}
-                >
-                  Add to cart
-                </button>
-                <button className="rounded-full border border-zinc-300 px-6 py-2 text-sm font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300">
-                  Buy now
-                </button>
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={prevCard}
-            className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-yellow-400 p-2 text-black hover:bg-yellow-500"
-            aria-label="Previous card"
-          >
-            ‹
-          </button>
-          <button
-            onClick={nextCard}
-            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-yellow-400 p-2 text-black hover:bg-yellow-500"
-            aria-label="Next card"
-          >
-            ›
-          </button>
-          <div className="flex justify-center pb-6">
-            {cardsForSale.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentCard(index)}
-                className={`mx-1 h-2 w-2 rounded-full ${
-                  index === currentCard ? "bg-yellow-400" : "bg-zinc-300 dark:bg-zinc-700"
-                }`}
-                aria-label={`Show card ${index + 1}`}
-              />
-            ))}
-          </div>
+              {cardsForSale.length > 1 && (
+                <>
+                  <button
+                    onClick={prevCard}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-yellow-400 p-2 text-black hover:bg-yellow-500"
+                    aria-label="Previous card"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={nextCard}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-yellow-400 p-2 text-black hover:bg-yellow-500"
+                    aria-label="Next card"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
+              {cardsForSale.length > 1 && (
+                <div className="flex justify-center pb-6">
+                  {cardsForSale.map((_, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentCard(index)}
+                      className={`mx-1 h-2 w-2 rounded-full ${
+                        index === currentCard ? "bg-yellow-400" : "bg-zinc-300 dark:bg-zinc-700"
+                      }`}
+                      aria-label={`Show card ${index + 1}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
         </div>
       </section>
       <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-16 px-8 bg-white dark:bg-black">

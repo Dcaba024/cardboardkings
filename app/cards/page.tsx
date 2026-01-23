@@ -37,22 +37,25 @@ export default function CardsPage() {
       const response = await fetch("/api/listings");
       if (response.ok) {
         const data = await response.json();
-        const mapped = (data as Array<{
+        const activeOnly = (data as Array<{
           id: string;
           title: string;
           description: string;
           priceCents: number;
           imageUrl: string;
-        }>).map((listing) => ({
-          id: listing.id,
-          name: listing.title,
-          player: listing.title,
-          set: "Listing",
-          description: listing.description,
-          price: listing.priceCents / 100,
-          image: listing.imageUrl,
-        }));
-        setListings(mapped);
+          status: string;
+        }>)
+          .filter((listing) => listing.status === "ACTIVE")
+          .map((listing) => ({
+            id: listing.id,
+            name: listing.title,
+            player: listing.title,
+            set: "Listing",
+            description: listing.description,
+            price: listing.priceCents / 100,
+            image: listing.imageUrl,
+          }));
+        setListings(activeOnly);
       }
       setIsLoading(false);
     };

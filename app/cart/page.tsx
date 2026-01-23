@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -13,6 +13,9 @@ const priceFormatter = new Intl.NumberFormat("en-US", {
 
 export default function CartPage() {
   const { items, cartCount, removeItem, clear } = useCart();
+  const [checkoutError, setCheckoutError] = useState<string | null>(null);
+  const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
 
   const subtotal = useMemo(
     () => items.reduce((total, item) => total + item.price * item.quantity, 0),
@@ -21,6 +24,33 @@ export default function CartPage() {
   const shipping = subtotal > 0 ? 15 : 0;
   const tax = subtotal > 0 ? Math.round(subtotal * 0.07) : 0;
   const total = subtotal + shipping + tax;
+
+  const handleCheckout = async () => {
+    setCheckoutError(null);
+    setCheckoutSuccess(null);
+    if (items.length === 0 || isCheckingOut) {
+      return;
+    }
+    setIsCheckingOut(true);
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: items.map((item) => item.id) }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Checkout failed.");
+      }
+      clear();
+      setCheckoutSuccess("Purchase complete! Your cards are now marked as sold.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Checkout failed.";
+      setCheckoutError(message);
+    } finally {
+      setIsCheckingOut(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black py-16 px-8">
@@ -144,6 +174,16 @@ export default function CartPage() {
                 <h2 className="text-xl font-semibold text-zinc-900 dark:text-yellow-300 mb-4">
                   Order summary
                 </h2>
+                {checkoutSuccess ? (
+                  <p className="mb-3 text-sm text-emerald-600 dark:text-emerald-400">
+                    {checkoutSuccess}
+                  </p>
+                ) : null}
+                {checkoutError ? (
+                  <p className="mb-3 text-sm text-red-500">
+                    {checkoutError}
+                  </p>
+                ) : null}
                 <div className="space-y-3 text-sm text-zinc-600 dark:text-zinc-300">
                   <div className="flex items-center justify-between">
                     <span>Subtotal</span>
@@ -164,8 +204,12 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-                <button className="mt-6 w-full rounded-full bg-yellow-400 px-6 py-3 text-sm font-semibold text-black hover:bg-yellow-500">
-                  Proceed to checkout
+                <button
+                  onClick={handleCheckout}
+                  disabled={items.length === 0 || isCheckingOut}
+                  className="mt-6 w-full rounded-full bg-yellow-400 px-6 py-3 text-sm font-semibold text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isCheckingOut ? "Processing..." : "Proceed to checkout"}
                 </button>
                 <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400 text-center">
                   Taxes and shipping calculated at checkout.
