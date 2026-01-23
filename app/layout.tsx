@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono, Cinzel } from "next/font/google";
 import Navbar from "./components/Navbar";
+import { CartProvider } from "./context/CartContext";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -30,20 +32,24 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} antialiased`}
-      >
-        <Navbar />
-        {children}
-        <footer className="w-full bg-zinc-100 dark:bg-zinc-800 p-4 mt-8">
-          <div className="max-w-4xl mx-auto text-center">
-            <p className="text-sm text-zinc-600 dark:text-zinc-400">
-              © {new Date().getFullYear()} Cardboard Kings. All rights reserved.
-            </p>
-          </div>
-        </footer>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body
+          className={`${geistSans.variable} ${geistMono.variable} ${cinzel.variable} antialiased`}
+        >
+          <CartProvider>
+            <Navbar />
+            {children}
+            <footer className="w-full bg-zinc-100 dark:bg-zinc-800 p-4 mt-8">
+              <div className="max-w-4xl mx-auto text-center">
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                  © {new Date().getFullYear()} Cardboard Kings. All rights reserved.
+                </p>
+              </div>
+            </footer>
+          </CartProvider>
+        </body>
+      </html>
+    </ClerkProvider>
   );
 }

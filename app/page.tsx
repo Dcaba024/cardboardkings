@@ -1,11 +1,20 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useCart } from "./context/CartContext";
+
+const priceFormatter = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  maximumFractionDigits: 0,
+});
 
 export default function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [currentCard, setCurrentCard] = useState(0);
+  const [addPulse, setAddPulse] = useState(false);
+  const { addItem } = useCart();
 
   const slides = [
     "Your cards deserve the royal treatment",
@@ -20,23 +29,26 @@ export default function Home() {
   ];
   const cardsForSale = [
     {
+      id: "jasson-dominguez",
       name: "Jasson Dominguez",
       description: "Bowman Chrome Prospect",
-      price: "$1,000",
+      price: 1000,
       image: "/jasson.jpg",
       alt: "Jasson Dominguez Bowman Chrome card"
     },
     {
+      id: "jasson-dominguez-rookie",
       name: "Jasson Dominguez",
       description: "Rookie Showcase",
-      price: "$850",
+      price: 850,
       image: "/Dominguez.JPEG",
       alt: "Jasson Dominguez rookie card"
     },
     {
+      id: "julio-rodriguez",
       name: "Julio Rodriguez",
       description: "Topps Chrome",
-      price: "$1,200",
+      price: 1200,
       image: "/jasson.jpg",
       alt: "Julio Rodriguez Topps Chrome card"
     }
@@ -55,6 +67,23 @@ export default function Home() {
 
   const prevCard = () => {
     setCurrentCard((prev) => (prev - 1 + cardsForSale.length) % cardsForSale.length);
+  };
+
+  useEffect(() => {
+    if (!addPulse) return;
+    const timeout = setTimeout(() => setAddPulse(false), 250);
+    return () => clearTimeout(timeout);
+  }, [addPulse]);
+
+  const handleAddToCart = () => {
+    const card = cardsForSale[currentCard];
+    addItem({
+      id: card.id,
+      name: card.name,
+      price: card.price,
+      image: card.image,
+    });
+    setAddPulse(true);
   };
 
   return (
@@ -124,10 +153,15 @@ export default function Home() {
                 </p>
               </div>
               <div className="text-3xl font-bold text-zinc-900 dark:text-yellow-400">
-                {cardsForSale[currentCard].price}
+                {priceFormatter.format(cardsForSale[currentCard].price)}
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
-                <button className="rounded-full bg-zinc-900 px-6 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-yellow-400 dark:text-black dark:hover:bg-yellow-300">
+                <button
+                  onClick={handleAddToCart}
+                  className={`rounded-full bg-zinc-900 px-6 py-2 text-sm font-semibold text-white transition-transform duration-150 hover:bg-zinc-800 dark:bg-yellow-400 dark:text-black dark:hover:bg-yellow-300 ${
+                    addPulse ? "scale-105" : "scale-100"
+                  }`}
+                >
                   Add to cart
                 </button>
                 <button className="rounded-full border border-zinc-300 px-6 py-2 text-sm font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300">
