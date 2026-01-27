@@ -33,7 +33,7 @@ export async function POST(request: Request) {
   }
 
   const stripe = new Stripe(secretKey, {
-    apiVersion: "2024-06-20",
+    apiVersion: "2025-02-24.acacia",
   });
 
   const headerOrigin = request.headers.get("origin");
