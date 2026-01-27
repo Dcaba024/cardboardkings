@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { useCart } from "../context/CartContext";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -16,6 +16,10 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvc, setCardCvc] = useState("");
+  const [cardName, setCardName] = useState("");
 
   const subtotal = useMemo(
     () => items.reduce((total, item) => total + item.price * item.quantity, 0),
@@ -25,6 +29,12 @@ export default function CartPage() {
   const tax = subtotal > 0 ? Math.round(subtotal * 0.07) : 0;
   const total = subtotal + shipping + tax;
 
+  useEffect(() => {
+    if (checkoutSuccess) {
+      clear();
+    }
+  }, [checkoutSuccess, clear]);
+
   const handleCheckout = async () => {
     setCheckoutError(null);
     setCheckoutSuccess(null);
@@ -33,23 +43,57 @@ export default function CartPage() {
     }
     setIsCheckingOut(true);
     try {
-      const response = await fetch("/api/checkout", {
+      const response = await fetch("/api/checkout/session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: items.map((item) => item.id) }),
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: item.quantity,
+          })),
+        }),
       });
       if (!response.ok) {
         const data = await response.json().catch(() => null);
         throw new Error(data?.error ?? "Checkout failed.");
       }
-      clear();
-      setCheckoutSuccess("Purchase complete! Your cards are now marked as sold.");
+      const data = (await response.json()) as { url?: string };
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error("Checkout failed to start.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Checkout failed.";
       setCheckoutError(message);
     } finally {
       setIsCheckingOut(false);
     }
+  };
+
+  const formatCardNumber = (value: string) => {
+    const digits = value.replace(/\D/g, "").slice(0, 19);
+    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
+  };
+
+  const handleCardNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setCardNumber(formatCardNumber(event.target.value));
+  };
+
+  const handleExpiryChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const digits = event.target.value.replace(/\D/g, "").slice(0, 4);
+    if (digits.length <= 2) {
+      setCardExpiry(digits);
+      return;
+    }
+    setCardExpiry(`${digits.slice(0, 2)}/${digits.slice(2)}`);
+  };
+
+  const handleCvcChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setCardCvc(event.target.value.replace(/\D/g, "").slice(0, 4));
   };
 
   return (
@@ -134,36 +178,36 @@ export default function CartPage() {
                 <h2 className="text-xl font-semibold text-zinc-900 dark:text-yellow-300 mb-4">
                   Shipping details
                 </h2>
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid min-w-0 gap-4 md:grid-cols-2">
                   <input
                     type="text"
                     placeholder="Full name"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="Email address"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="Street address"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
                   />
                   <input
                     type="text"
                     placeholder="City"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="State"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="Zip code"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                 </div>
               </div>
@@ -224,24 +268,46 @@ export default function CartPage() {
                   <input
                     type="text"
                     placeholder="Card number"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    name="cardNumber"
+                    autoComplete="cc-number"
+                    inputMode="numeric"
+                    value={cardNumber ?? ""}
+                    onChange={handleCardNumberChange}
+                    maxLength={23}
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid min-w-0 gap-4 md:grid-cols-2">
                     <input
                       type="text"
                       placeholder="MM/YY"
-                      className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                      name="cardExpiry"
+                      autoComplete="cc-exp"
+                      inputMode="numeric"
+                      value={cardExpiry ?? ""}
+                      onChange={handleExpiryChange}
+                      maxLength={5}
+                      className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                     />
                     <input
                       type="text"
                       placeholder="CVC"
-                      className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                      name="cardCvc"
+                      autoComplete="cc-csc"
+                      inputMode="numeric"
+                      value={cardCvc ?? ""}
+                      onChange={handleCvcChange}
+                      maxLength={4}
+                      className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                     />
                   </div>
                   <input
                     type="text"
                     placeholder="Name on card"
-                    className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    name="cardName"
+                    autoComplete="cc-name"
+                    value={cardName ?? ""}
+                    onChange={(event) => setCardName(event.target.value)}
+                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                 </div>
               </div>
@@ -254,7 +320,7 @@ export default function CartPage() {
                   <input
                     type="text"
                     placeholder="Enter code"
-                    className="flex-1 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                    className="flex-1 min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <button className="rounded-full border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300">
                     Apply

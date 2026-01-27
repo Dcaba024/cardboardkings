@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 
@@ -83,7 +84,7 @@ export default function CardsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black py-16 px-8">
-      <main className="mx-auto w-full max-w-6xl">
+      <main className="mx-auto w-full max-w-screen-2xl">
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold text-black dark:text-yellow-400 font-[var(--font-cinzel)] uppercase tracking-[0.08em]">
             Cards for sale
@@ -94,13 +95,13 @@ export default function CardsPage() {
         </div>
 
         <div className="mb-8 rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-          <div className="grid gap-4 md:grid-cols-4">
+          <div className="grid min-w-0 gap-4 md:grid-cols-4">
             <input
               type="text"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search by player or set"
-              className="rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
+              className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
             />
             <div className="flex gap-3">
               <input
@@ -108,20 +109,20 @@ export default function CardsPage() {
                 value={minPrice}
                 onChange={(event) => setMinPrice(event.target.value)}
                 placeholder="Min price"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
               />
               <input
                 type="number"
                 value={maxPrice}
                 onChange={(event) => setMaxPrice(event.target.value)}
                 placeholder="Max price"
-                className="w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+                className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
               />
             </div>
             <select
               value={sortBy}
               onChange={(event) => setSortBy(event.target.value)}
-              className="rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
+              className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
             >
               <option value="featured">Featured</option>
               <option value="price-asc">Price: Low to High</option>
@@ -132,7 +133,7 @@ export default function CardsPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
           {isLoading ? (
             <div className="col-span-full rounded-2xl border border-dashed border-zinc-300 bg-white p-10 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-400">
               Loading listings...
@@ -149,20 +150,24 @@ export default function CardsPage() {
                   key={card.id}
                   className="flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-200 bg-white shadow-sm dark:border-zinc-800 dark:bg-zinc-950"
                 >
-                  <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-900">
-                    <Image
-                      src={card.image}
-                      alt={`${card.player} card`}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 320px"
-                      className="object-cover"
-                    />
-                  </div>
+                  <Link href={`/cards/${card.id}`}>
+                    <div className="relative aspect-[4/5] w-full bg-zinc-100 dark:bg-zinc-900">
+                      <Image
+                        src={card.image}
+                        alt={`${card.player} card`}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 320px"
+                        className="object-cover"
+                      />
+                    </div>
+                  </Link>
                   <div className="flex flex-1 flex-col gap-4 p-5">
                     <div>
-                      <h2 className="text-xl font-semibold text-zinc-900 dark:text-yellow-300">
-                        {card.player}
-                      </h2>
+                      <Link href={`/cards/${card.id}`}>
+                        <h2 className="text-xl font-semibold text-zinc-900 dark:text-yellow-300">
+                          {card.player}
+                        </h2>
+                      </Link>
                       <p className="text-sm text-zinc-500 dark:text-zinc-400">
                         {card.set}
                       </p>

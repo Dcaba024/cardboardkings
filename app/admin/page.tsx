@@ -13,7 +13,7 @@ export default async function AdminPage() {
 
   return (
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black py-16 px-8">
-      <main className="mx-auto w-full max-w-6xl">
+      <main className="mx-auto w-full max-w-screen-2xl">
         <div className="mb-10 text-center">
           <h1 className="text-4xl font-bold text-black dark:text-yellow-400 font-[var(--font-cinzel)] uppercase tracking-[0.08em]">
             Admin Dashboard
