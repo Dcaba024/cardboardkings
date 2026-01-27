@@ -118,7 +118,7 @@ export default function Navbar() {
               </SignUpButton>
             </SignedOut>
             <SignedIn>
-              <UserButton afterSignOutUrl="/" />
+              <UserButton afterSignOutUrl="/signed-out" />
             </SignedIn>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function Navbar() {
               </SignUpButton>
             </SignedOut>
             <SignedIn>
-              <UserButton afterSignOutUrl="/" />
+              <UserButton afterSignOutUrl="/signed-out" />
             </SignedIn>
           </div>
         </div>
