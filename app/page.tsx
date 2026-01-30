@@ -126,9 +126,6 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black">
       <div className="text-center mb-12">
         <div className="relative w-full mx-auto">
-           <p className="text-5xl font-bold text-zinc-600 dark:text-yellow-300 transition-opacity duration-500 text-center pb-0 md:pb-2">
-              {slides[currentSlide]}
-            </p>
           <div className="overflow-hidden rounded-lg bg-black p-0 md:pt-10 md:px-20 md:pb-20 min-h-[400px] md:min-h-[700px] flex items-center justify-center">
             <div className="relative w-full max-w-[1536px]">
               <Image
@@ -140,6 +137,13 @@ export default function Home() {
                 className="h-auto w-full"
                 priority
               />
+              <div className="absolute inset-0 flex items-end justify-center p-4 md:p-8">
+                <div className="rounded-full bg-black/60 px-6 py-3 text-center">
+                  <p className="text-2xl font-semibold text-white md:text-3xl">
+                    {slides[currentSlide]}
+                  </p>
+                </div>
+              </div>
               <button
                 onClick={prevSlide}
                 className="absolute left-3 top-1/2 -translate-y-1/2 bg-yellow-400 text-black p-2 rounded-full hover:bg-yellow-500"
