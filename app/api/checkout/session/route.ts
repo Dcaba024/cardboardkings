@@ -61,6 +61,9 @@ export async function POST(request: Request) {
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
+      shipping_address_collection: {
+        allowed_countries: ["US"],
+      },
       line_items: filtered.map((item) => {
         const resolvedImageUrl = item.image
           ? new URL(item.image, origin).toString()

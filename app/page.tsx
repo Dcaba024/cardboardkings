@@ -34,9 +34,9 @@ export default function Home() {
   ];
 
   const images = [
-    "https://images2.minutemediacdn.com/image/upload/c_crop,x_91,y_235,w_2362,h_1328/c_fill,w_720,ar_16:9,f_auto,q_auto,g_auto/images/voltaxMediaLibrary/mmsport/si_collects/01kcm7jm5ykvkkfd2q3p.jpg",
-    "https://thumbs.dreamstime.com/b/baseball-cards-collection-major-league-48239751.jpg", // Replace with actual image URL
-    "https://cdn11.bigcommerce.com/s-cft20qcvqs/images/stencil/original/image-manager/sports-plp-baseball.jpg?t=1674001770"  // Replace with actual image URL
+    "/gold.png",
+    "/sportscarousel.png",
+    "/thirdcarousel.png",
   ];
   useEffect(() => {
     let isActive = true;
@@ -129,28 +129,33 @@ export default function Home() {
            <p className="text-5xl font-bold text-zinc-600 dark:text-yellow-300 transition-opacity duration-500 text-center pb-0 md:pb-2">
               {slides[currentSlide]}
             </p>
-          <div
-            className="overflow-hidden rounded-lg bg-black p-0 md:pt-8 md:px-16 md:pb-16 min-h-[300px] md:min-h-[500px] flex items-center justify-start"
-            style={{
-              backgroundImage: `url('${images[currentSlide]}')`,
-              backgroundSize: 'contain',
-              backgroundPosition: 'center',
-              backgroundRepeat: 'no-repeat'
-            }}
-          >
+          <div className="overflow-hidden rounded-lg bg-black p-0 md:pt-10 md:px-20 md:pb-20 min-h-[400px] md:min-h-[700px] flex items-center justify-center">
+            <div className="relative w-full max-w-[1536px]">
+              <Image
+                src={images[currentSlide]}
+                alt={slides[currentSlide]}
+                width={1536}
+                height={1024}
+                sizes="(max-width: 1536px) 100vw, 1536px"
+                className="h-auto w-full"
+                priority
+              />
+              <button
+                onClick={prevSlide}
+                className="absolute left-3 top-1/2 -translate-y-1/2 bg-yellow-400 text-black p-2 rounded-full hover:bg-yellow-500"
+                aria-label="Previous slide"
+              >
+                ‹
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-yellow-400 text-black p-2 rounded-full hover:bg-yellow-500"
+                aria-label="Next slide"
+              >
+                ›
+              </button>
+            </div>
           </div>
-          <button
-            onClick={prevSlide}
-            className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-yellow-400 text-black p-2 rounded-full hover:bg-yellow-500"
-          >
-            ‹
-          </button>
-          <button
-            onClick={nextSlide}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-yellow-400 text-black p-2 rounded-full hover:bg-yellow-500"
-          >
-            ›
-          </button>
           <div className="flex justify-center mt-4 space-x-2">
             {slides.map((_, index) => (
               <button
@@ -164,6 +169,49 @@ export default function Home() {
           </div>
         </div>
       </div>
+      <main className="flex w-full max-w-4xl mx-auto flex-col items-center justify-start py-6 px-8 bg-white dark:bg-black">
+
+        <section className="mb-6">
+          <h2 className="text-3xl font-semibold text-black dark:text-yellow-400 mb-6 text-center">
+            Our Guarantees
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
+                Professional Cleaning
+              </h3>
+              <p className="text-zinc-600 dark:text-yellow-300">
+                Expert care for your valuable sports cards.
+              </p>
+            </div>
+            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
+                Mail-in Service
+              </h3>
+              <p className="text-zinc-600 dark:text-yellow-300">
+                Convenient shipping options for your convenience.
+              </p>
+            </div>
+            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
+                Fast Turnaround
+              </h3>
+              <p className="text-zinc-600 dark:text-yellow-300">
+                Quick processing to get your cards back to you soon.
+              </p>
+            </div>
+            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
+              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
+                Collector Approved
+              </h3>
+              <p className="text-zinc-600 dark:text-yellow-300">
+                Trusted by collectors for quality and care.
+              </p>
+            </div>
+          </div>
+        </section>
+
+      </main>
       <section className="mx-auto w-full max-w-4xl px-8 pb-8">
         <h2 className="mb-6 text-center text-3xl font-semibold text-zinc-900 dark:text-yellow-400">
           Cards for sale
@@ -264,49 +312,6 @@ export default function Home() {
           )}
         </div>
       </section>
-      <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-16 px-8 bg-white dark:bg-black">
-
-        <section className="mb-12">
-          <h2 className="text-3xl font-semibold text-black dark:text-yellow-400 mb-6 text-center">
-            Our Guarantees
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
-                Professional Cleaning
-              </h3>
-              <p className="text-zinc-600 dark:text-yellow-300">
-                Expert care for your valuable sports cards.
-              </p>
-            </div>
-            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
-                Mail-in Service
-              </h3>
-              <p className="text-zinc-600 dark:text-yellow-300">
-                Convenient shipping options for your convenience.
-              </p>
-            </div>
-            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
-                Fast Turnaround
-              </h3>
-              <p className="text-zinc-600 dark:text-yellow-300">
-                Quick processing to get your cards back to you soon.
-              </p>
-            </div>
-            <div className="p-6 bg-zinc-100 dark:bg-zinc-800 rounded-lg">
-              <h3 className="text-xl font-medium text-black dark:text-yellow-400 mb-2">
-                Collector Approved
-              </h3>
-              <p className="text-zinc-600 dark:text-yellow-300">
-                Trusted by collectors for quality and care.
-              </p>
-            </div>
-          </div>
-        </section>
-
-      </main>
     </div>
   );
 }

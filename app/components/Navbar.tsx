@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   SignInButton,
@@ -49,29 +50,18 @@ export default function Navbar() {
         <div className="w-full flex items-center justify-between px-4">
           <div className="flex items-center space-x-4">
             <Link href="/" className="flex items-center space-x-4">
-              <svg
-                width="50"
-                height="30"
-                viewBox="0 0 100 60"
-                className="text-yellow-400"
-                fill="currentColor"
-              >
-                <polygon points="10,50 20,30 30,40 40,20 50,30 60,20 70,40 80,30 90,50" />
-                <circle cx="20" cy="35" r="3" />
-                <circle cx="40" cy="25" r="3" />
-                <circle cx="60" cy="25" r="3" />
-                <circle cx="80" cy="35" r="3" />
-              </svg>
+              <Image
+                src="/crown.png"
+                alt="Cardboard Kings crown logo"
+                width={50}
+                height={50}
+                className="h-15 w-auto"
+                priority
+              />
               <span className="text-xl font-bold text-black dark:text-yellow-400 font-[var(--font-cinzel)] uppercase tracking-[0.08em]">
                 Cardboard Kings
               </span>
             </Link>
-            <button
-              onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden text-black dark:text-yellow-400"
-            >
-              ☰
-            </button>
           </div>
           <div className="hidden lg:flex items-center justify-between flex-1 px-6">
             <div className="flex space-x-6">
@@ -83,6 +73,13 @@ export default function Navbar() {
               ) : null}
             </div>
           </div>
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="lg:hidden text-black dark:text-yellow-400"
+            aria-label="Toggle navigation menu"
+          >
+            ☰
+          </button>
           <div className="hidden lg:flex items-center space-x-4">
             <Link
               href="/cart"

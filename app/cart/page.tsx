@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "../context/CartContext";
 
 const priceFormatter = new Intl.NumberFormat("en-US", {
@@ -16,10 +16,7 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const [cardNumber, setCardNumber] = useState("");
-  const [cardExpiry, setCardExpiry] = useState("");
-  const [cardCvc, setCardCvc] = useState("");
-  const [cardName, setCardName] = useState("");
+  const checkoutDisabled = true;
 
   const subtotal = useMemo(
     () => items.reduce((total, item) => total + item.price * item.quantity, 0),
@@ -38,62 +35,45 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setCheckoutError(null);
     setCheckoutSuccess(null);
+    if (checkoutDisabled) {
+      setCheckoutError("Checkout is temporarily unavailable. Please contact us to purchase.");
+      return;
+    }
     if (items.length === 0 || isCheckingOut) {
       return;
     }
     setIsCheckingOut(true);
     try {
-      const response = await fetch("/api/checkout/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          items: items.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: item.price,
-            image: item.image,
-            quantity: item.quantity,
-          })),
-        }),
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.error ?? "Checkout failed.");
-      }
-      const data = (await response.json()) as { url?: string };
-      if (data.url) {
-        window.location.href = data.url;
-        return;
-      }
-      throw new Error("Checkout failed to start.");
+      // Stripe checkout is temporarily disabled while identity verification completes.
+      // const response = await fetch("/api/checkout/session", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({
+      //     items: items.map((item) => ({
+      //       id: item.id,
+      //       name: item.name,
+      //       price: item.price,
+      //       image: item.image,
+      //       quantity: item.quantity,
+      //     })),
+      //   }),
+      // });
+      // if (!response.ok) {
+      //   const data = await response.json().catch(() => null);
+      //   throw new Error(data?.error ?? "Checkout failed.");
+      // }
+      // const data = (await response.json()) as { url?: string };
+      // if (data.url) {
+      //   window.location.href = data.url;
+      //   return;
+      // }
+      // throw new Error("Checkout failed to start.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Checkout failed.";
       setCheckoutError(message);
     } finally {
       setIsCheckingOut(false);
     }
-  };
-
-  const formatCardNumber = (value: string) => {
-    const digits = value.replace(/\D/g, "").slice(0, 19);
-    return digits.replace(/(\d{4})(?=\d)/g, "$1 ");
-  };
-
-  const handleCardNumberChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setCardNumber(formatCardNumber(event.target.value));
-  };
-
-  const handleExpiryChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const digits = event.target.value.replace(/\D/g, "").slice(0, 4);
-    if (digits.length <= 2) {
-      setCardExpiry(digits);
-      return;
-    }
-    setCardExpiry(`${digits.slice(0, 2)}/${digits.slice(2)}`);
-  };
-
-  const handleCvcChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setCardCvc(event.target.value.replace(/\D/g, "").slice(0, 4));
   };
 
   return (
@@ -248,68 +228,19 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
+                <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-300 text-center">
+                  Stripe checkout is temporarily unavailable. Please contact us to purchase.
+                </p>
                 <button
                   onClick={handleCheckout}
-                  disabled={items.length === 0 || isCheckingOut}
+                  disabled={checkoutDisabled || items.length === 0 || isCheckingOut}
                   className="mt-6 w-full rounded-full bg-yellow-400 px-6 py-3 text-sm font-semibold text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isCheckingOut ? "Processing..." : "Proceed to checkout"}
+                  {isCheckingOut ? "Processing..." : "Contact us to purchase"}
                 </button>
                 <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400 text-center">
                   Taxes and shipping calculated at checkout.
                 </p>
-              </div>
-
-              <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
-                <h2 className="text-xl font-semibold text-zinc-900 dark:text-yellow-300 mb-4">
-                  Payment method
-                </h2>
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    placeholder="Card number"
-                    name="cardNumber"
-                    autoComplete="cc-number"
-                    inputMode="numeric"
-                    value={cardNumber ?? ""}
-                    onChange={handleCardNumberChange}
-                    maxLength={23}
-                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-                  />
-                  <div className="grid min-w-0 gap-4 md:grid-cols-2">
-                    <input
-                      type="text"
-                      placeholder="MM/YY"
-                      name="cardExpiry"
-                      autoComplete="cc-exp"
-                      inputMode="numeric"
-                      value={cardExpiry ?? ""}
-                      onChange={handleExpiryChange}
-                      maxLength={5}
-                      className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-                    />
-                    <input
-                      type="text"
-                      placeholder="CVC"
-                      name="cardCvc"
-                      autoComplete="cc-csc"
-                      inputMode="numeric"
-                      value={cardCvc ?? ""}
-                      onChange={handleCvcChange}
-                      maxLength={4}
-                      className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Name on card"
-                    name="cardName"
-                    autoComplete="cc-name"
-                    value={cardName ?? ""}
-                    onChange={(event) => setCardName(event.target.value)}
-                    className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
-                  />
-                </div>
               </div>
 
               <div className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-950">
