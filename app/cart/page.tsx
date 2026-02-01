@@ -16,7 +16,9 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
-  const checkoutDisabled = true;
+  const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  const isStripeConfigured = Boolean(stripePublishableKey);
+  const checkoutDisabled = !isStripeConfigured;
 
   const subtotal = useMemo(
     () => items.reduce((total, item) => total + item.price * item.quantity, 0),
@@ -35,8 +37,8 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setCheckoutError(null);
     setCheckoutSuccess(null);
-    if (checkoutDisabled) {
-      setCheckoutError("Checkout is temporarily unavailable. Please contact us to purchase.");
+    if (!isStripeConfigured) {
+      setCheckoutError("Checkout is unavailable right now. Stripe is not configured.");
       return;
     }
     if (items.length === 0 || isCheckingOut) {
@@ -44,33 +46,36 @@ export default function CartPage() {
     }
     setIsCheckingOut(true);
     try {
-      // Stripe checkout is temporarily disabled while identity verification completes.
-      // const response = await fetch("/api/checkout/session", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({
-      //     items: items.map((item) => ({
-      //       id: item.id,
-      //       name: item.name,
-      //       price: item.price,
-      //       image: item.image,
-      //       quantity: item.quantity,
-      //     })),
-      //   }),
-      // });
-      // if (!response.ok) {
-      //   const data = await response.json().catch(() => null);
-      //   throw new Error(data?.error ?? "Checkout failed.");
-      // }
-      // const data = (await response.json()) as { url?: string };
-      // if (data.url) {
-      //   window.location.href = data.url;
-      //   return;
-      // }
-      // throw new Error("Checkout failed to start.");
+      const response = await fetch("/api/checkout/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map((item) => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.image,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error ?? "Checkout failed.");
+      }
+      const data = (await response.json()) as { url?: string };
+      if (data.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error("Checkout failed to start.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Checkout failed.";
-      setCheckoutError(message);
+      setCheckoutError(
+        message === "Stripe is not configured."
+          ? "Checkout is unavailable right now. Stripe is not configured."
+          : message
+      );
     } finally {
       setIsCheckingOut(false);
     }
@@ -228,15 +233,22 @@ export default function CartPage() {
                     </div>
                   </div>
                 </div>
-                <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-300 text-center">
-                  Stripe checkout is temporarily unavailable. Please contact us to purchase.
-                </p>
+                {!isStripeConfigured ? (
+                  <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-300 text-center">
+                    Checkout is unavailable right now. Stripe is not configured.
+                  </p>
+                ) : null}
+                {isCheckingOut ? (
+                  <p className="mt-4 text-sm text-zinc-600 dark:text-zinc-300 text-center">
+                    Redirecting to Stripe Checkout...
+                  </p>
+                ) : null}
                 <button
                   onClick={handleCheckout}
                   disabled={checkoutDisabled || items.length === 0 || isCheckingOut}
                   className="mt-6 w-full rounded-full bg-yellow-400 px-6 py-3 text-sm font-semibold text-black hover:bg-yellow-500 disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  {isCheckingOut ? "Processing..." : "Contact us to purchase"}
+                  {isCheckingOut ? "Processing..." : "Proceed to checkout"}
                 </button>
                 <p className="mt-3 text-xs text-zinc-500 dark:text-zinc-400 text-center">
                   Taxes and shipping calculated at checkout.

@@ -126,15 +126,14 @@ export default function Home() {
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black">
       <div className="text-center mb-12">
         <div className="relative w-full mx-auto">
-          <div className="overflow-hidden rounded-lg bg-black p-0 md:pt-10 md:px-20 md:pb-20 min-h-[400px] md:min-h-[700px] flex items-center justify-center">
-            <div className="relative w-full max-w-[1536px]">
+          <div className="overflow-hidden rounded-lg bg-black p-0 md:pt-8 md:px-12 md:pb-12 min-h-[260px] md:min-h-[360px] flex items-center justify-center">
+            <div className="relative w-full max-w-[1280px] h-[400px] md:h-[730px]">
               <Image
                 src={images[currentSlide]}
                 alt={slides[currentSlide]}
-                width={1536}
-                height={1024}
-                sizes="(max-width: 1536px) 100vw, 1536px"
-                className="h-auto w-full"
+                fill
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                className="object-contain"
                 priority
               />
               <div className="absolute inset-0 flex items-end justify-center p-4 md:p-8">
