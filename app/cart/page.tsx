@@ -16,6 +16,14 @@ export default function CartPage() {
   const [checkoutError, setCheckoutError] = useState<string | null>(null);
   const [checkoutSuccess, setCheckoutSuccess] = useState<string | null>(null);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const [shippingDetails, setShippingDetails] = useState({
+    fullName: "",
+    email: "",
+    address: "",
+    city: "",
+    state: "",
+    zip: "",
+  });
   const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
   const isStripeConfigured = Boolean(stripePublishableKey);
   const checkoutDisabled = !isStripeConfigured;
@@ -37,6 +45,21 @@ export default function CartPage() {
   const handleCheckout = async () => {
     setCheckoutError(null);
     setCheckoutSuccess(null);
+    const missingFields: string[] = [];
+    if (!shippingDetails.fullName.trim()) missingFields.push("Full name");
+    if (!shippingDetails.email.trim()) {
+      missingFields.push("Email address");
+    } else if (!/^\S+@\S+\.\S+$/.test(shippingDetails.email)) {
+      missingFields.push("Valid email address");
+    }
+    if (!shippingDetails.address.trim()) missingFields.push("Street address");
+    if (!shippingDetails.city.trim()) missingFields.push("City");
+    if (!shippingDetails.state.trim()) missingFields.push("State");
+    if (!shippingDetails.zip.trim()) missingFields.push("Zip code");
+    if (missingFields.length > 0) {
+      setCheckoutError(`Please complete: ${missingFields.join(", ")}.`);
+      return;
+    }
     if (!isStripeConfigured) {
       setCheckoutError("Checkout is unavailable right now. Stripe is not configured.");
       return;
@@ -167,31 +190,79 @@ export default function CartPage() {
                   <input
                     type="text"
                     placeholder="Full name"
+                    required
+                    value={shippingDetails.fullName}
+                    onChange={(event) =>
+                      setShippingDetails((prev) => ({
+                        ...prev,
+                        fullName: event.target.value,
+                      }))
+                    }
                     className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="Email address"
+                    required
+                    value={shippingDetails.email}
+                    onChange={(event) =>
+                      setShippingDetails((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
                     className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="Street address"
+                    required
+                    value={shippingDetails.address}
+                    onChange={(event) =>
+                      setShippingDetails((prev) => ({
+                        ...prev,
+                        address: event.target.value,
+                      }))
+                    }
                     className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 md:col-span-2"
                   />
                   <input
                     type="text"
                     placeholder="City"
+                    required
+                    value={shippingDetails.city}
+                    onChange={(event) =>
+                      setShippingDetails((prev) => ({
+                        ...prev,
+                        city: event.target.value,
+                      }))
+                    }
                     className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="State"
+                    required
+                    value={shippingDetails.state}
+                    onChange={(event) =>
+                      setShippingDetails((prev) => ({
+                        ...prev,
+                        state: event.target.value,
+                      }))
+                    }
                     className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                   <input
                     type="text"
                     placeholder="Zip code"
+                    required
+                    value={shippingDetails.zip}
+                    onChange={(event) =>
+                      setShippingDetails((prev) => ({
+                        ...prev,
+                        zip: event.target.value,
+                      }))
+                    }
                     className="w-full min-w-0 rounded-lg border border-zinc-300 bg-white px-4 py-2 text-sm text-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200"
                   />
                 </div>
