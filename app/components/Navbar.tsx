@@ -69,7 +69,10 @@ export default function Navbar() {
               <Link href="/services" className="text-black dark:text-yellow-300 hover:text-yellow-500">Services</Link>
               <Link href="/about" className="text-black dark:text-yellow-300 hover:text-yellow-500">About Us</Link>
               {orgRole === "org:admin" ? (
-                <Link href="/admin" className="text-black dark:text-yellow-300 hover:text-yellow-500">Admin</Link>
+                <>
+                  <Link href="/admin" className="text-black dark:text-yellow-300 hover:text-yellow-500">Admin</Link>
+                  <Link href="/admin/sales" className="text-black dark:text-yellow-300 hover:text-yellow-500">Sales</Link>
+                </>
               ) : null}
             </div>
           </div>
@@ -148,13 +151,22 @@ export default function Navbar() {
             About Us
           </Link>
           {orgRole === "org:admin" ? (
-            <Link
-              href="/admin"
-              onClick={() => setMenuOpen(false)}
-              className="text-black dark:text-yellow-300 hover:text-yellow-500"
-            >
-              Admin
-            </Link>
+            <>
+              <Link
+                href="/admin"
+                onClick={() => setMenuOpen(false)}
+                className="text-black dark:text-yellow-300 hover:text-yellow-500"
+              >
+                Admin
+              </Link>
+              <Link
+                href="/admin/sales"
+                onClick={() => setMenuOpen(false)}
+                className="text-black dark:text-yellow-300 hover:text-yellow-500"
+              >
+                Sales
+              </Link>
+            </>
           ) : null}
           <div className="flex flex-wrap items-center gap-3 mt-2">
             <Link

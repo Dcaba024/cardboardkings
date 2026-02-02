@@ -80,6 +80,18 @@ export default function CartPage() {
             image: item.image,
             quantity: item.quantity,
           })),
+          charges: {
+            shippingCents: Math.round(shipping * 100),
+            taxCents: Math.round(tax * 100),
+          },
+          shipping: {
+            name: shippingDetails.fullName.trim(),
+            email: shippingDetails.email.trim(),
+            address: shippingDetails.address.trim(),
+            city: shippingDetails.city.trim(),
+            state: shippingDetails.state.trim(),
+            zip: shippingDetails.zip.trim(),
+          },
         }),
       });
       if (!response.ok) {

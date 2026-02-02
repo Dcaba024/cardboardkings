@@ -23,3 +23,24 @@ model Listing {
   status     String   @default("ACTIVE")
   createdAt  DateTime @default(now())
 }
+
+model Sale {
+  id                   String   @id @default(cuid())
+  stripeSessionId      String   @unique
+  stripePaymentIntentId String?
+  listingIds           String[] @default([])
+  amountTotalCents     Int?
+  currency             String?
+  buyerEmail           String?
+  buyerName            String?
+  buyerPhone           String?
+  shippingLine1        String?
+  shippingLine2        String?
+  shippingCity         String?
+  shippingState        String?
+  shippingPostal       String?
+  shippingCountry      String?
+  receiptUrl           String?
+  invoiceUrl           String?
+  createdAt            DateTime @default(now())
+}

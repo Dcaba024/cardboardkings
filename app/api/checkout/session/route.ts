@@ -11,9 +11,31 @@ type CheckoutItem = {
   quantity: number;
 };
 
+type ShippingPayload = {
+  name?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
+};
+
+type ChargesPayload = {
+  shippingCents?: number;
+  taxCents?: number;
+};
+
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const items = Array.isArray(body?.items) ? (body.items as CheckoutItem[]) : [];
+  const shipping =
+    body?.shipping && typeof body.shipping === "object"
+      ? (body.shipping as ShippingPayload)
+      : null;
+  const charges =
+    body?.charges && typeof body.charges === "object"
+      ? (body.charges as ChargesPayload)
+      : null;
   const filtered = items.filter(
     (item) =>
       item &&
@@ -50,21 +72,28 @@ export async function POST(request: Request) {
     );
   }
 
+  const customerEmail =
+    typeof shipping?.email === "string" && shipping.email.trim()
+      ? shipping.email.trim()
+      : undefined;
+
   const successUrl = new URL(
     "/success?session_id={CHECKOUT_SESSION_ID}",
     origin
   ).toString();
   const cancelUrl = new URL("/cancel", origin).toString();
+  const shippingCents =
+    typeof charges?.shippingCents === "number" && charges.shippingCents > 0
+      ? Math.round(charges.shippingCents)
+      : 0;
+  const taxCents =
+    typeof charges?.taxCents === "number" && charges.taxCents > 0
+      ? Math.round(charges.taxCents)
+      : 0;
 
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      success_url: successUrl,
-      cancel_url: cancelUrl,
-      shipping_address_collection: {
-        allowed_countries: ["US"],
-      },
-      line_items: filtered.map((item) => {
+    const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
+      ...filtered.map((item) => {
         const resolvedImageUrl = item.image
           ? new URL(item.image, origin).toString()
           : undefined;
@@ -85,8 +114,48 @@ export async function POST(request: Request) {
           },
         };
       }),
+    ];
+    if (shippingCents > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: shippingCents,
+          product_data: {
+            name: "Shipping",
+          },
+        },
+      });
+    }
+    if (taxCents > 0) {
+      lineItems.push({
+        quantity: 1,
+        price_data: {
+          currency: "usd",
+          unit_amount: taxCents,
+          product_data: {
+            name: "Estimated tax",
+          },
+        },
+      });
+    }
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      customer_email: customerEmail,
+      phone_number_collection: {
+        enabled: true,
+      },
+      shipping_address_collection: {
+        allowed_countries: ["US"],
+      },
+      line_items: lineItems,
       metadata: {
         listingIds: JSON.stringify(filtered.map((item) => item.id)),
+        shippingCents: String(shippingCents),
+        taxCents: String(taxCents),
       },
     });
 

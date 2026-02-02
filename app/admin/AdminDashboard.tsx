@@ -44,6 +44,7 @@ export default function AdminDashboard() {
   const [successVisible, setSuccessVisible] = useState(false);
   const [editingIds, setEditingIds] = useState<string[]>([]);
   const [editDrafts, setEditDrafts] = useState<Record<string, EditDraft>>({});
+  const [restorePulseId, setRestorePulseId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!successPulse) return;
@@ -62,6 +63,13 @@ export default function AdminDashboard() {
     };
   }, [successMessage]);
 
+  useEffect(() => {
+    if (!restorePulseId) {
+      return;
+    }
+    const timeout = setTimeout(() => setRestorePulseId(null), 350);
+    return () => clearTimeout(timeout);
+  }, [restorePulseId]);
   const showError = (message: string) => {
     setFormError(message);
     if (typeof window !== "undefined") {
@@ -245,6 +253,9 @@ export default function AdminDashboard() {
       return;
     }
     const nextStatus = target.status === "ACTIVE" ? "SOLD" : "ACTIVE";
+    if (nextStatus === "ACTIVE") {
+      setRestorePulseId(id);
+    }
     const response = await fetch(`/api/listings/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -650,7 +661,11 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => toggleStatus(listing.id)}
-                            className="rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-900 hover:border-zinc-400 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300"
+                            className={`rounded-full border border-zinc-300 px-4 py-2 text-xs font-semibold text-zinc-900 transition-transform duration-300 hover:border-zinc-400 active:scale-95 dark:border-zinc-700 dark:text-yellow-300 dark:hover:border-yellow-300 ${
+                              restorePulseId === listing.id
+                                ? "scale-105 animate-pulse"
+                                : ""
+                            }`}
                           >
                             Restore
                           </button>
