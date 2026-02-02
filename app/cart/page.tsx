@@ -8,7 +8,8 @@ import { useCart } from "../context/CartContext";
 const priceFormatter = new Intl.NumberFormat("en-US", {
   style: "currency",
   currency: "USD",
-  maximumFractionDigits: 0,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 export default function CartPage() {
@@ -33,8 +34,8 @@ export default function CartPage() {
     [items]
   );
   const shipping = subtotal > 0 ? 15 : 0;
-  const tax = subtotal > 0 ? Math.round(subtotal * 0.07) : 0;
-  const total = subtotal + shipping + tax;
+  const tax = 0;
+  const total = subtotal + shipping;
 
   useEffect(() => {
     if (checkoutSuccess) {
@@ -82,7 +83,6 @@ export default function CartPage() {
           })),
           charges: {
             shippingCents: Math.round(shipping * 100),
-            taxCents: Math.round(tax * 100),
           },
           shipping: {
             name: shippingDetails.fullName.trim(),
@@ -304,10 +304,6 @@ export default function CartPage() {
                   <div className="flex items-center justify-between">
                     <span>Shipping</span>
                     <span>{priceFormatter.format(shipping)}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span>Estimated tax</span>
-                    <span>{priceFormatter.format(tax)}</span>
                   </div>
                   <div className="border-t border-zinc-200 pt-3 text-base font-semibold text-zinc-900 dark:border-zinc-700 dark:text-yellow-300">
                     <div className="flex items-center justify-between">

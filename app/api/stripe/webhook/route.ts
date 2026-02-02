@@ -178,14 +178,11 @@ export async function POST(request: Request) {
       const shippingCents = session.metadata?.shippingCents
         ? Number(session.metadata.shippingCents)
         : 0;
-      const taxCents = session.metadata?.taxCents
-        ? Number(session.metadata.taxCents)
-        : 0;
+      const totalCents = session.amount_total ?? 0;
       const chargesText = [
         shippingCents > 0
           ? `Shipping: $${(shippingCents / 100).toFixed(2)}`
           : null,
-        taxCents > 0 ? `Estimated tax: $${(taxCents / 100).toFixed(2)}` : null,
       ]
         .filter(Boolean)
         .join("\n");
@@ -197,6 +194,8 @@ export async function POST(request: Request) {
         itemsText || "No items found.",
         chargesText ? "" : null,
         chargesText || null,
+        "",
+        `Total paid: $${(totalCents / 100).toFixed(2)}`,
         "",
         "Shipping:",
         shippingDetailsText || "No shipping details provided.",
@@ -224,16 +223,12 @@ export async function POST(request: Request) {
           });
         }
         if (adminRecipients.length > 0) {
-          await Promise.all(
-            adminRecipients.map((email) =>
-              sendEmail({
-                to: email,
-                subject,
-                text: messageText,
-                attachments: [receiptAttachment],
-              })
-            )
-          );
+          await sendEmail({
+            to: adminRecipients,
+            subject,
+            text: messageText,
+            attachments: [receiptAttachment],
+          });
         }
       } catch (error) {
         console.error("Email send failed:", error);

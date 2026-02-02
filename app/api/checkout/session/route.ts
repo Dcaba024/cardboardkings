@@ -22,7 +22,6 @@ type ShippingPayload = {
 
 type ChargesPayload = {
   shippingCents?: number;
-  taxCents?: number;
 };
 
 export async function POST(request: Request) {
@@ -86,10 +85,6 @@ export async function POST(request: Request) {
     typeof charges?.shippingCents === "number" && charges.shippingCents > 0
       ? Math.round(charges.shippingCents)
       : 0;
-  const taxCents =
-    typeof charges?.taxCents === "number" && charges.taxCents > 0
-      ? Math.round(charges.taxCents)
-      : 0;
 
   try {
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
@@ -107,9 +102,11 @@ export async function POST(request: Request) {
           price_data: {
             currency: "usd",
             unit_amount: Math.round(item.price * 100),
+            tax_behavior: "exclusive" as Stripe.Checkout.SessionCreateParams.LineItem.PriceData.TaxBehavior,
             product_data: {
               name: item.name,
               images: imageUrl ? [imageUrl] : [],
+              tax_code: "txcd_99999999",
             },
           },
         };
@@ -121,29 +118,18 @@ export async function POST(request: Request) {
         price_data: {
           currency: "usd",
           unit_amount: shippingCents,
+          tax_behavior: "exclusive" as Stripe.Checkout.SessionCreateParams.LineItem.PriceData.TaxBehavior,
           product_data: {
             name: "Shipping",
           },
         },
       });
     }
-    if (taxCents > 0) {
-      lineItems.push({
-        quantity: 1,
-        price_data: {
-          currency: "usd",
-          unit_amount: taxCents,
-          product_data: {
-            name: "Estimated tax",
-          },
-        },
-      });
-    }
-
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
       success_url: successUrl,
       cancel_url: cancelUrl,
+      automatic_tax: { enabled: true },
       customer_email: customerEmail,
       phone_number_collection: {
         enabled: true,
@@ -155,7 +141,6 @@ export async function POST(request: Request) {
       metadata: {
         listingIds: JSON.stringify(filtered.map((item) => item.id)),
         shippingCents: String(shippingCents),
-        taxCents: String(taxCents),
       },
     });
 
