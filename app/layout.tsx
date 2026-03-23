@@ -24,6 +24,9 @@ const cinzel = Cinzel({
 export const metadata: Metadata = {
   title: "Cardboard Kings",
   description: "Professional sports card cleaning service",
+  verification: {
+    google: "lUAoz-8oNiW3XFB3WHdtip_ZE5lwzl6YhRWfDVVIH_s",
+  },
 };
 
 export default function RootLayout({
