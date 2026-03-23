@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "About",
+  description:
+    "Learn about Cardboard Kings, a Lodi, New Jersey sports card cleaning and collector care business.",
+  alternates: {
+    canonical: "/about",
+  },
+};
+
 export default function About() {
   return (
     <div className="min-h-screen bg-zinc-50 font-serif dark:bg-black py-16 px-8">

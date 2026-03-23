@@ -3,6 +3,12 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { Geist, Geist_Mono, Cinzel } from "next/font/google";
 import Navbar from "./components/Navbar";
 import { CartProvider } from "./context/CartContext";
+import {
+  SITE_DESCRIPTION,
+  SITE_NAME,
+  absoluteUrl,
+  getBaseUrl,
+} from "./lib/seo";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -22,10 +28,59 @@ const cinzel = Cinzel({
 });
 
 export const metadata: Metadata = {
-  title: "Cardboard Kings",
-  description: "Professional sports card cleaning service",
+  metadataBase: getBaseUrl(),
+  title: {
+    default: SITE_NAME,
+    template: `%s | ${SITE_NAME}`,
+  },
+  applicationName: SITE_NAME,
+  referrer: "origin-when-cross-origin",
+  description: SITE_DESCRIPTION,
+  alternates: {
+    canonical: "/",
+  },
+  keywords: [
+    "sports card cleaning",
+    "sports card marketplace",
+    "card cleaning service",
+    "trading card cleaning",
+    "sports cards for sale",
+    "collector card care",
+  ],
   verification: {
     google: "lUAoz-8oNiW3XFB3WHdtip_ZE5lwzl6YhRWfDVVIH_s",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: SITE_NAME,
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [
+      {
+        url: absoluteUrl("/gold.png"),
+        width: 1200,
+        height: 1200,
+        alt: `${SITE_NAME} logo`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_NAME,
+    description: SITE_DESCRIPTION,
+    images: [absoluteUrl("/gold.png")],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
   },
 };
 

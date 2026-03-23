@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 import AdminDashboard from "./AdminDashboard";
 import { getIsAdmin } from "../lib/auth";
-import { is } from "zod/locales";
 
 export const dynamic = "force-dynamic";
 

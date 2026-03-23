@@ -1,3 +1,14 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Services",
+  description:
+    "Explore Cardboard Kings sports card cleaning services, from dust removal to bulk submission prep.",
+  alternates: {
+    canonical: "/services",
+  },
+};
+
 export default function Services() {
   const services = [
     {
