@@ -10,11 +10,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           "/admin/",
           "/api/",
-          "/cart/",
-          "/cancel/",
-          "/sign-in/",
-          "/sign-up/",
-          "/success/",
         ],
       },
     ],
